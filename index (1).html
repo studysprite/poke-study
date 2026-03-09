@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PokeStudy — UWorld Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --cream: #f5f0e8;
+    --parchment: #ede5d0;
+    --warm-tan: #d4b896;
+    --brown: #8b6f47;
+    --dark-brown: #5c4a2a;
+    --forest: #5a7a5a;
+    --forest-light: #7a9a7a;
+    --rust: #c0622a;
+    --gold: #c8973a;
+    --gold-light: #e8b84b;
+    --ink: #2d2416;
+    --ink-soft: #5a4a35;
+    --shadow: rgba(93,74,42,0.15);
+    --card-bg: #faf6ee;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Lora', Georgia, serif;
+    background-color: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(200,151,58,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(90,122,90,0.08) 0%, transparent 50%);
+  }
+  header {
+    background: var(--dark-brown);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--gold-light); letter-spacing: 0.02em; }
+  .logo span { color: var(--warm-tan); font-weight: 400; font-size: 1rem; margin-left: 0.5rem; }
+  .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+  .btn { font-family: 'Lora', serif; border: none; cursor: pointer; border-radius: 6px; font-size: 0.875rem; font-weight: 500; transition: all 0.18s; padding: 0.5rem 1.1rem; }
+  .btn-gold { background: var(--gold); color: #fff; }
+  .btn-gold:hover { background: var(--gold-light); color: var(--ink); }
+  .btn-forest { background: var(--forest); color: #fff; }
+  .btn-forest:hover { background: var(--forest-light); }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--warm-tan); color: var(--warm-tan); }
+  .btn-ghost:hover { background: rgba(212,184,150,0.15); }
+  .btn-rust { background: var(--rust); color: #fff; }
+  .btn-rust:hover { filter: brightness(1.1); }
+  .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+  main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; display: grid; gap: 1.5rem; }
+  .card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 10px var(--shadow); border: 1px solid rgba(212,184,150,0.4); }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--dark-brown); margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  @media (max-width: 700px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+  .stat-box { background: linear-gradient(135deg, var(--parchment) 0%, var(--card-bg) 100%); border: 1px solid rgba(212,184,150,0.5); border-radius: 10px; padding: 1.1rem 1rem; text-align: center; }
+  .stat-number { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--dark-brown); line-height: 1; }
+  .stat-label { font-size: 0.75rem; color: var(--ink-soft); margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-sub { font-size: 0.7rem; color: var(--brown); margin-top: 0.2rem; }
+  .progress-wrap { margin-top: 0.5rem; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 0.4rem; }
+  .progress-bar { height: 10px; background: var(--parchment); border-radius: 99px; overflow: hidden; border: 1px solid rgba(212,184,150,0.5); }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--forest) 0%, var(--gold) 100%); border-radius: 99px; transition: width 0.6s ease; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 750px) { .two-col { grid-template-columns: 1fr; } }
+  .chart-wrap { position: relative; height: 220px; }
+  .form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end; }
+  .form-group { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 100px; }
+  .form-group label { font-size: 0.75rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+  .form-group input { font-family: 'Lora', serif; border: 1.5px solid var(--warm-tan); border-radius: 6px; padding: 0.5rem 0.7rem; background: var(--cream); color: var(--ink); font-size: 0.9rem; width: 100%; }
+  .form-group input:focus { outline: none; border-color: var(--brown); }
+  .session-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 230px; overflow-y: auto; }
+  .session-item { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.8rem; background: var(--parchment); border-radius: 7px; font-size: 0.85rem; border-left: 3px solid var(--gold); }
+  .session-date { color: var(--ink-soft); font-size: 0.78rem; }
+  .session-count { font-weight: 600; color: var(--dark-brown); }
+  .session-delete { background: none; border: none; cursor: pointer; color: var(--brown); font-size: 0.85rem; opacity: 0.5; transition: opacity 0.15s; }
+  .session-delete:hover { opacity: 1; color: var(--rust); }
+  .empty-state { color: var(--ink-soft); font-style: italic; font-size: 0.9rem; text-align: center; padding: 1.5rem; }
+  .poke-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.75rem; max-height: 400px; overflow-y: auto; padding-right: 0.25rem; }
+  .poke-card { background: var(--parchment); border: 1.5px solid rgba(212,184,150,0.6); border-radius: 10px; padding: 0.6rem 0.4rem 0.5rem; text-align: center; transition: transform 0.2s, box-shadow 0.2s; }
+  .poke-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px var(--shadow); }
+  .poke-card img { width: 56px; height: 56px; image-rendering: pixelated; display: block; margin: 0 auto; }
+  .poke-card .poke-name { font-size: 0.68rem; color: var(--ink-soft); margin-top: 0.3rem; text-transform: capitalize; }
+  .poke-card .poke-num { font-size: 0.6rem; color: var(--warm-tan); }
+  #toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--dark-brown); color: var(--cream); border-radius: 12px; padding: 1rem 1.4rem; display: flex; align-items: center; gap: 0.9rem; box-shadow: 0 8px 28px rgba(0,0,0,0.3); transform: translateY(140%); transition: transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275); z-index: 999; max-width: 300px; }
+  #toast.show { transform: translateY(0); }
+  #toast img { width: 56px; height: 56px; image-rendering: pixelated; }
+  #toast .toast-title { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--gold-light); }
+  #toast .toast-body { font-size: 0.8rem; color: var(--warm-tan); margin-top: 0.2rem; text-transform: capitalize; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(44,36,22,0.6); backdrop-filter: blur(3px); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--card-bg); border-radius: 14px; padding: 2rem; max-width: 480px; width: 90%; box-shadow: 0 16px 48px rgba(0,0,0,0.3); transform: translateY(20px); transition: transform 0.25s; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal h2 { font-family: 'Playfair Display', serif; color: var(--dark-brown); margin-bottom: 1.2rem; font-size: 1.3rem; }
+  .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+  .modal textarea { width: 100%; height: 160px; font-family: 'Courier New', monospace; font-size: 0.78rem; border: 1.5px solid var(--warm-tan); border-radius: 6px; padding: 0.7rem; background: var(--cream); color: var(--ink); resize: vertical; }
+  .modal textarea:focus { outline: none; border-color: var(--brown); }
+  .modal p { font-size: 0.88rem; color: var(--ink-soft); margin-bottom: 0.8rem; line-height: 1.6; }
+  .modal code { background: var(--parchment); padding: 0.15rem 0.35rem; border-radius: 3px; font-size: 0.8rem; color: var(--rust); }
+  .settings-group { margin-bottom: 1rem; }
+  .settings-group label { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); margin-bottom: 0.35rem; }
+  .settings-group input { font-family: 'Lora', serif; border: 1.5px solid var(--warm-tan); border-radius: 6px; padding: 0.5rem 0.7rem; background: var(--cream); color: var(--ink); font-size: 0.9rem; width: 100%; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--parchment); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: var(--warm-tan); border-radius: 3px; }
+  .divider { border: none; border-top: 1px solid rgba(212,184,150,0.4); margin: 1rem 0; }
+  .badge { display: inline-block; background: var(--forest); color: #fff; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.05em; vertical-align: middle; margin-left: 0.3rem; }
+  .next-poke-row { display: flex; align-items: center; gap: 0.75rem; background: var(--parchment); border-radius: 8px; padding: 0.7rem 1rem; margin-top: 0.75rem; }
+  .next-poke-row img { width: 40px; height: 40px; image-rendering: pixelated; opacity: 0.4; filter: grayscale(1); }
+  .next-poke-label { font-size: 0.78rem; color: var(--ink-soft); flex: 1; }
+  .next-poke-label strong { display: block; color: var(--dark-brown); font-size: 0.85rem; margin-bottom: 0.15rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🌿 PokeStudy <span>UWorld Tracker</span></div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="openImport()">Import CSV</button>
+    <button class="btn btn-ghost btn-sm" onclick="openSettings()">⚙ Settings</button>
+    <button class="btn btn-rust btn-sm" onclick="clearAll()">Reset</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-number" id="stat-done">0</div>
+      <div class="stat-label">Questions Done</div>
+      <div class="stat-sub" id="stat-pct">0% of QBank</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" id="stat-remain">3280</div>
+      <div class="stat-label">Remaining</div>
+      <div class="stat-sub">Step 1 QBank</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" id="stat-streak">0</div>
+      <div class="stat-label">Day Streak</div>
+      <div class="stat-sub" id="stat-today">0 today</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" id="stat-pokemon">0</div>
+      <div class="stat-label">Pokémon Caught</div>
+      <div class="stat-sub" id="stat-next-pokemon">10 more for next!</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 1.2rem 1.5rem;">
+    <div class="progress-label">
+      <span>QBank Progress</span>
+      <span id="progress-label-right">0 / 3280</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="next-poke-row">
+      <img id="next-poke-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ii/crystal/animated/132.gif" alt="?">
+      <div class="next-poke-label">
+        <strong id="next-poke-text">0 / 10 questions until next Pokémon</strong>
+        Every 10 questions earns you a new companion!
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">📝 Log Questions</div>
+      <div class="form-row">
+        <div class="form-group" style="max-width:145px;">
+          <label>Date</label>
+          <input type="date" id="log-date">
+        </div>
+        <div class="form-group" style="max-width:95px;">
+          <label>Questions</label>
+          <input type="number" id="log-count" min="1" placeholder="40">
+        </div>
+        <div class="form-group" style="max-width:95px;">
+          <label>Daily Goal</label>
+          <input type="number" id="log-goal" min="1" placeholder="40">
+        </div>
+      </div>
+      <div style="margin-top:0.9rem;">
+        <button class="btn btn-gold" style="width:100%" onclick="logSession()">Log ✦</button>
+      </div>
+      <hr class="divider">
+      <div class="card-title" style="margin-bottom:0.6rem; font-size:0.95rem;">📋 Session Log</div>
+      <div class="session-list" id="session-list">
+        <div class="empty-state">No sessions logged yet.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 Daily Questions</div>
+      <div class="chart-wrap">
+        <canvas id="chart-daily"></canvas>
+      </div>
+      <hr class="divider" style="margin:0.75rem 0;">
+      <div class="card-title" style="margin-bottom:0.5rem; font-size:0.95rem;">📊 Cumulative Progress</div>
+      <div class="chart-wrap" style="height:160px;">
+        <canvas id="chart-cumulative"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎒 Pokémon Collection <span id="poke-count-badge" class="badge">0 caught</span></div>
+    <div class="poke-grid" id="poke-grid">
+      <div class="empty-state" style="grid-column:1/-1">Complete 10 questions to earn your first Pokémon!</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- TOAST -->
+<div id="toast">
+  <img id="toast-img" src="" alt="">
+  <div>
+    <div class="toast-title">✨ New Pokémon!</div>
+    <div class="toast-body" id="toast-name"></div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal">
+    <h2>📥 Import UWorld CSV</h2>
+    <p>Paste CSV rows below — one per line in format: <code>MM/DD/YYYY, count, Name</code>. You can use the same AI-convert flow from UWorld's Previous Tests page.</p>
+    <textarea id="csv-input" placeholder="03/01/2026,44,Test 201&#10;02/28/2026,40,Test 200"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-import')">Cancel</button>
+      <button class="btn btn-gold" onclick="importCSV()">Import ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal">
+    <h2>⚙ Settings</h2>
+    <div class="settings-group">
+      <label>Total QBank Size (Step 1 default: 3280)</label>
+      <input type="number" id="set-qbank" placeholder="3280">
+    </div>
+    <div class="settings-group">
+      <label>Daily Question Goal</label>
+      <input type="number" id="set-goal" placeholder="40">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-settings')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveSettings()">Save ✦</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CHART INSTANCES declared at top level to avoid TDZ errors ──
+var chartDaily = null;
+var chartCumulative = null;
+
+// ── STATE ──
+var state = {
+  sessions: [],
+  pokemon: [],
+  totalDone: 0,
+  settings: { qbankSize: 3280, dailyGoal: 40 }
+};
+
+function loadState() {
+  try {
+    var s = localStorage.getItem('pokestudy_v2');
+    if (s) state = JSON.parse(s);
+  } catch(e) { console.warn('Could not load state:', e); }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('pokestudy_v2', JSON.stringify(state));
+  } catch(e) { console.warn('Could not save state:', e); }
+}
+
+// ── GEN II CRYSTAL ANIMATED SPRITES ──
+// Only Pokémon #1–251 have Gen II Crystal animated GIFs
+var POKE_COUNT = 251;
+var POKE_NAMES = ["","Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Caterpie","Metapod","Butterfree","Weedle","Kakuna","Beedrill","Pidgey","Pidgeotto","Pidgeot","Rattata","Raticate","Spearow","Fearow","Ekans","Arbok","Pikachu","Raichu","Sandshrew","Sandslash","Nidoran♀","Nidorina","Nidoqueen","Nidoran♂","Nidorino","Nidoking","Clefairy","Clefable","Vulpix","Ninetales","Jigglypuff","Wigglytuff","Zubat","Golbat","Oddish","Gloom","Vileplume","Paras","Parasect","Venonat","Venomoth","Diglett","Dugtrio","Meowth","Persian","Psyduck","Golduck","Mankey","Primeape","Growlithe","Arcanine","Poliwag","Poliwhirl","Poliwrath","Abra","Kadabra","Alakazam","Machop","Machoke","Machamp","Bellsprout","Weepinbell","Victreebel","Tentacool","Tentacruel","Geodude","Graveler","Golem","Ponyta","Rapidash","Slowpoke","Slowbro","Magnemite","Magneton","Farfetch'd","Doduo","Dodrio","Seel","Dewgong","Grimer","Muk","Shellder","Cloyster","Gastly","Haunter","Gengar","Onix","Drowzee","Hypno","Krabby","Kingler","Voltorb","Electrode","Exeggcute","Exeggutor","Cubone","Marowak","Hitmonlee","Hitmonchan","Lickitung","Koffing","Weezing","Rhyhorn","Rhydon","Chansey","Tangela","Kangaskhan","Horsea","Seadra","Goldeen","Seaking","Staryu","Starmie","Mr. Mime","Scyther","Jynx","Electabuzz","Magmar","Pinsir","Tauros","Magikarp","Gyarados","Lapras","Ditto","Eevee","Vaporeon","Jolteon","Flareon","Porygon","Omanyte","Omastar","Kabuto","Kabutops","Aerodactyl","Snorlax","Articuno","Zapdos","Moltres","Dratini","Dragonair","Dragonite","Mewtwo","Mew","Chikorita","Bayleef","Meganium","Cyndaquil","Quilava","Typhlosion","Totodile","Croconaw","Feraligatr","Sentret","Furret","Hoothoot","Noctowl","Ledyba","Ledian","Spinarak","Ariados","Crobat","Chinchou","Lanturn","Pichu","Cleffa","Igglybuff","Togepi","Togetic","Natu","Xatu","Mareep","Flaaffy","Ampharos","Bellossom","Marill","Azumarill","Sudowoodo","Politoed","Hoppip","Skiploom","Jumpluff","Aipom","Sunkern","Sunflora","Yanma","Wooper","Quagsire","Espeon","Umbreon","Murkrow","Slowking","Misdreavus","Unown","Wobbuffet","Girafarig","Pineco","Forretress","Dunsparce","Gligar","Steelix","Snubbull","Granbull","Qwilfish","Scizor","Shuckle","Heracross","Sneasel","Teddiursa","Ursaring","Slugma","Magcargo","Swinub","Piloswine","Corsola","Remoraid","Octillery","Delibird","Mantine","Skarmory","Houndour","Houndoom","Kingdra","Phanpy","Donphan","Porygon2","Stantler","Smeargle","Tyrogue","Hitmontop","Smoochum","Elekid","Magby","Miltank","Blissey","Raikou","Entei","Suicune","Larvitar","Pupitar","Tyranitar","Lugia","Ho-Oh","Celebi"];
+
+function spriteUrl(id) {
+  return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ii/crystal/animated/' + id + '.gif';
+}
+function spriteFallback(id) {
+  // static Crystal sprite as fallback
+  return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ii/crystal/' + id + '.png';
+}
+
+// ── INIT ──
+loadState();
+document.getElementById('log-date').valueAsDate = new Date();
+document.getElementById('log-goal').value = state.settings.dailyGoal;
+renderAll();
+
+// ── RENDER ALL ──
+function renderAll() {
+  renderStats();
+  renderSessionList();
+  renderPokemon();
+  renderCharts();
+}
+
+// ── STATS ──
+function renderStats() {
+  var done = state.totalDone;
+  var size = state.settings.qbankSize;
+  var pct  = size > 0 ? Math.min(100, (done / size * 100)).toFixed(1) : 0;
+  var remain = Math.max(0, size - done);
+  var qInto = done % 10;
+
+  document.getElementById('stat-done').textContent = done.toLocaleString();
+  document.getElementById('stat-pct').textContent = pct + '% of QBank';
+  document.getElementById('stat-remain').textContent = remain.toLocaleString();
+  document.getElementById('stat-pokemon').textContent = state.pokemon.length;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label-right').textContent = done.toLocaleString() + ' / ' + size.toLocaleString();
+  document.getElementById('next-poke-text').textContent = qInto + ' / 10 questions until next Pokémon';
+  document.getElementById('stat-next-pokemon').textContent = (10 - qInto) + ' more for next!';
+
+  var streak = calcStreak();
+  document.getElementById('stat-streak').textContent = streak > 0 ? streak + ' 🔥' : streak;
+  document.getElementById('stat-today').textContent = getTodayCount() + ' today';
+}
+
+function calcStreak() {
+  if (state.sessions.length === 0) return 0;
+  var dateSet = {};
+  state.sessions.forEach(function(s) { dateSet[s.date] = true; });
+  var streak = 0;
+  var d = new Date();
+  for (var i = 0; i < 365; i++) {
+    var key = d.toISOString().slice(0, 10);
+    if (dateSet[key]) {
+      streak++;
+    } else if (i === 0) {
+      // today has no entry yet — check if yesterday started a streak
+    } else {
+      break;
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+function getTodayCount() {
+  var today = new Date().toISOString().slice(0, 10);
+  return state.sessions.reduce(function(acc, s) {
+    return s.date === today ? acc + s.count : acc;
+  }, 0);
+}
+
+// ── LOG SESSION ──
+function logSession() {
+  var dateVal  = document.getElementById('log-date').value;
+  var countVal = parseInt(document.getElementById('log-count').value);
+  var goalVal  = parseInt(document.getElementById('log-goal').value);
+
+  if (!dateVal || isNaN(countVal) || countVal < 1) {
+    alert('Please enter a valid date and a question count of at least 1.');
+    return;
+  }
+  if (!isNaN(goalVal) && goalVal > 0) {
+    state.settings.dailyGoal = goalVal;
+  }
+
+  addSession({ date: dateVal, count: countVal, name: '' });
+  document.getElementById('log-count').value = '';
+}
+
+function addSession(sess) {
+  var prevTotal = state.totalDone;
+
+  state.sessions.push(sess);
+  state.totalDone += sess.count;
+  state.sessions.sort(function(a, b) { return a.date.localeCompare(b.date); });
+  saveState();
+
+  // How many Pokémon should exist now vs how many we have
+  var shouldHave = Math.floor(state.totalDone / 10);
+  var toEarn = shouldHave - state.pokemon.length;
+
+  if (toEarn > 0) {
+    earnPokemon(toEarn);
+  }
+
+  renderAll();
+}
+
+// ── SESSION LIST ──
+function renderSessionList() {
+  var el = document.getElementById('session-list');
+  if (state.sessions.length === 0) {
+    el.innerHTML = '<div class="empty-state">No sessions logged yet.</div>';
+    return;
+  }
+  var html = '';
+  var reversed = state.sessions.slice().reverse();
+  reversed.forEach(function(s, ri) {
+    var realIndex = state.sessions.length - 1 - ri;
+    html += '<div class="session-item">'
+      + '<div><span class="session-date">' + formatDate(s.date) + '</span>'
+      + (s.name ? '<span style="margin-left:0.4rem;color:var(--ink-soft);font-size:0.78rem;">· ' + s.name + '</span>' : '')
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:0.5rem;">'
+      + '<span class="session-count">' + s.count + ' Qs</span>'
+      + '<button class="session-delete" onclick="deleteSession(' + realIndex + ')">✕</button>'
+      + '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function deleteSession(i) {
+  if (!confirm('Delete this session?')) return;
+  state.totalDone = Math.max(0, state.totalDone - state.sessions[i].count);
+  state.sessions.splice(i, 1);
+  saveState();
+  renderAll();
+}
+
+function formatDate(iso) {
+  var parts = iso.split('-');
+  return parts[1] + '/' + parts[2] + '/' + parts[0];
+}
+
+// ── CHARTS ──
+function renderCharts() {
+  var byDate = {};
+  state.sessions.forEach(function(s) {
+    byDate[s.date] = (byDate[s.date] || 0) + s.count;
+  });
+
+  var sortedDates = Object.keys(byDate).sort();
+  var dailyCounts = sortedDates.map(function(d) { return byDate[d]; });
+
+  var cumulativeCounts = [];
+  var running = 0;
+  dailyCounts.forEach(function(c) { running += c; cumulativeCounts.push(running); });
+
+  var labels = sortedDates.map(formatDate);
+
+  var goalLine = labels.map(function() { return state.settings.dailyGoal; });
+
+  var sharedOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#8b6f47', font: { size: 10 } }, grid: { color: 'rgba(212,184,150,0.2)' } },
+      y: { ticks: { color: '#8b6f47', font: { size: 10 } }, grid: { color: 'rgba(212,184,150,0.2)' }, beginAtZero: true }
+    }
+  };
+
+  // Destroy existing charts before recreating
+  if (chartDaily) { chartDaily.destroy(); chartDaily = null; }
+  if (chartCumulative) { chartCumulative.destroy(); chartCumulative = null; }
+
+  chartDaily = new Chart(document.getElementById('chart-daily'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Questions',
+          data: dailyCounts,
+          backgroundColor: 'rgba(90,122,90,0.65)',
+          borderColor: '#5a7a5a',
+          borderWidth: 1.5,
+          borderRadius: 4,
+          order: 2
+        },
+        {
+          label: 'Goal',
+          data: goalLine,
+          type: 'line',
+          borderColor: 'rgba(200,151,58,0.7)',
+          borderDash: [5, 4],
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+          order: 1
+        }
+      ]
+    },
+    options: Object.assign({}, sharedOpts, {
+      plugins: { legend: { display: false } }
+    })
+  });
+
+  chartCumulative = new Chart(document.getElementById('chart-cumulative'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: cumulativeCounts,
+        borderColor: '#c8973a',
+        backgroundColor: 'rgba(200,151,58,0.12)',
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointBackgroundColor: '#c8973a',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: sharedOpts
+  });
+}
+
+// ── POKEMON ──
+function earnPokemon(n) {
+  for (var i = 0; i < n; i++) {
+    (function(idx) {
+      var id = Math.floor(Math.random() * POKE_COUNT) + 1;
+      var name = POKE_NAMES[id] || ('#' + id);
+      state.pokemon.push({ id: id, name: name, date: new Date().toISOString().slice(0, 10) });
+      saveState();
+      setTimeout(function() {
+        showToast(id, name);
+        renderPokemon();
+        renderStats();
+      }, idx * 1800);
+    })(i);
+  }
+  // Show the first one immediately in the collection
+  renderPokemon();
+  renderStats();
+}
+
+function showToast(id, name) {
+  var img = document.getElementById('toast-img');
+  img.src = spriteUrl(id);
+  img.onerror = function() { this.src = spriteFallback(id); };
+  document.getElementById('toast-name').textContent = name;
+  var t = document.getElementById('toast');
+  t.classList.remove('show');
+  void t.offsetWidth; // force reflow
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3800);
+}
+
+function renderPokemon() {
+  var grid  = document.getElementById('poke-grid');
+  var badge = document.getElementById('poke-count-badge');
+  badge.textContent = state.pokemon.length + ' caught';
+
+  if (state.pokemon.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Complete 10 questions to earn your first Pokémon!</div>';
+    return;
+  }
+
+  var html = '';
+  state.pokemon.forEach(function(p) {
+    html += '<div class="poke-card" title="' + p.name + ' — earned ' + p.date + '">'
+      + '<img src="' + spriteUrl(p.id) + '" alt="' + p.name + '" onerror="this.onerror=null;this.src=\'' + spriteFallback(p.id) + '\'">'
+      + '<div class="poke-name">' + p.name + '</div>'
+      + '<div class="poke-num">#' + p.id + '</div>'
+      + '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+// ── IMPORT CSV ──
+function openImport() { document.getElementById('modal-import').classList.add('open'); }
+
+function importCSV() {
+  var raw = document.getElementById('csv-input').value.trim();
+  if (!raw) return;
+  var lines = raw.split('\n').filter(function(l) { return l.trim(); });
+  var imported = 0;
+  lines.forEach(function(line) {
+    var parts = line.split(',');
+    if (parts.length < 2) return;
+    var dateParts = parts[0].trim().split('/');
+    if (dateParts.length !== 3) return;
+    var iso = dateParts[2].trim() + '-' + dateParts[0].trim().padStart(2,'0') + '-' + dateParts[1].trim().padStart(2,'0');
+    var count = parseInt(parts[1]);
+    var name = parts[2] ? parts[2].trim() : '';
+    if (isNaN(count) || count < 1) return;
+    state.sessions.push({ date: iso, count: count, name: name });
+    state.totalDone += count;
+    imported++;
+  });
+
+  if (imported > 0) {
+    state.sessions.sort(function(a, b) { return a.date.localeCompare(b.date); });
+    var shouldHave = Math.floor(state.totalDone / 10);
+    var toEarn = shouldHave - state.pokemon.length;
+    if (toEarn > 0) earnPokemon(Math.min(toEarn, 30));
+    saveState();
+    renderAll();
+    closeModal('modal-import');
+    document.getElementById('csv-input').value = '';
+    alert('✦ Imported ' + imported + ' session' + (imported > 1 ? 's' : '') + '!');
+  } else {
+    alert('No valid rows found. Expected format: MM/DD/YYYY,count,name');
+  }
+}
+
+// ── SETTINGS ──
+function openSettings() {
+  document.getElementById('set-qbank').value = state.settings.qbankSize;
+  document.getElementById('set-goal').value  = state.settings.dailyGoal;
+  document.getElementById('modal-settings').classList.add('open');
+}
+function saveSettings() {
+  var q = parseInt(document.getElementById('set-qbank').value);
+  var g = parseInt(document.getElementById('set-goal').value);
+  if (!isNaN(q) && q > 0) state.settings.qbankSize = q;
+  if (!isNaN(g) && g > 0) state.settings.dailyGoal = g;
+  saveState();
+  renderAll();
+  closeModal('modal-settings');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(function(el) {
+  el.addEventListener('click', function(e) { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ── RESET ──
+function clearAll() {
+  if (!confirm('Reset ALL data? This cannot be undone.')) return;
+  state = { sessions: [], pokemon: [], totalDone: 0, settings: { qbankSize: 3280, dailyGoal: 40 } };
+  saveState();
+  renderAll();
+}
+</script>
+</body>
+</html>
