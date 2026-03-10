@@ -148,7 +148,7 @@ footer { text-align: center; font-size: 0.75rem; color: var(--text-muted); paddi
     <div class="section-label">Overview</div>
     <div class="stats-row">
       <div class="stat"><div class="stat-n" id="s-done">0</div><div class="stat-l">Questions done</div><div class="stat-s" id="s-pct">0% of QBank</div></div>
-      <div class="stat"><div class="stat-n" id="s-remain">3280</div><div class="stat-l">Remaining</div><div class="stat-s">Step 1 QBank</div></div>
+      <div class="stat"><div class="stat-n" id="s-remain">3662</div><div class="stat-l">Remaining</div><div class="stat-s">Step 1 QBank</div></div>
       <div class="stat"><div class="stat-n" id="s-streak">0</div><div class="stat-l">Day streak</div><div class="stat-s" id="s-today">0 today</div></div>
       <div class="stat"><div class="stat-n green" id="s-poke">0</div><div class="stat-l">Pokemon caught</div><div class="stat-s" id="s-next">10 more to next</div></div>
     </div>
@@ -156,7 +156,7 @@ footer { text-align: center; font-size: 0.75rem; color: var(--text-muted); paddi
   <div class="progress-section">
     <div class="progress-top">
       <div class="progress-title">QBank Progress</div>
-      <div class="progress-pct" id="p-label">0 / 3280</div>
+      <div class="progress-pct" id="p-label">0 / 3662</div>
     </div>
     <div class="bar-track"><div class="bar-fill" id="p-fill" style="width:0%"></div></div>
     <div class="progress-sub">Every 10 questions earns a new Pokemon - <span id="p-next">0 / 10</span> to the next one</div>
@@ -218,7 +218,7 @@ footer { text-align: center; font-size: 0.75rem; color: var(--text-muted); paddi
 <div class="overlay" id="modal-settings">
   <div class="modal">
     <h2>Settings</h2>
-    <div class="modal-field"><label>Total QBank size (Step 1 default: 3280)</label><input type="number" id="set-qbank" placeholder="3280"></div>
+    <div class="modal-field"><label>Total QBank size (Step 1 default: 3662)</label><input type="number" id="set-qbank" placeholder="3662"></div>
     <div class="modal-field"><label>Daily question goal</label><input type="number" id="set-goal" placeholder="40"></div>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('modal-settings')">Cancel</button>
@@ -285,7 +285,7 @@ function applyAccentColor(id) {
   }
 }
 // ── STATE & INIT (after all consts above) ─────────────────
-let S = { sessions:[], pokemon:[], totalDone:0, buddyId:null, settings:{qbankSize:3280,dailyGoal:40} };
+let S = { sessions:[], pokemon:[], totalDone:0, buddyId:null, settings:{qbankSize:3662,dailyGoal:40} };
 let pokeSort = 'recent'; // 'recent' | 'dex'
 function load() { try { const d=localStorage.getItem('pokestudy_v2'); if(d) S=JSON.parse(d); } catch(e){} }
 function save() { localStorage.setItem('pokestudy_v2', JSON.stringify(S)); }
@@ -440,7 +440,7 @@ function saveSettings() {
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
-function clearAll() { if(!confirm('Reset all data? This cannot be undone.')) return; S={sessions:[],pokemon:[],totalDone:0,buddyId:null,settings:{qbankSize:3280,dailyGoal:40}}; save(); renderAll(); }
+function clearAll() { if(!confirm('Reset all data? This cannot be undone.')) return; S={sessions:[],pokemon:[],totalDone:0,buddyId:null,settings:{qbankSize:3662,dailyGoal:40}}; save(); renderAll(); }
 
 </script>
 </body>
