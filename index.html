@@ -238,8 +238,8 @@ footer { text-align: center; font-size: 0.75rem; color: var(--text-muted); paddi
   <div class="card" id="shop-section">
     <div class="poke-header" style="margin-bottom:0.6rem;">
       <div>
-        <div class="card-title" style="margin-bottom:0.15rem;">PokeMarket <em>·</em> evolve &amp; collect</div>
-        <div style="font-size:0.78rem;color:var(--text-muted);">Every correct answer earns 1 pt. Spend them on items to evolve your Pokemon!</div>
+        <div class="card-title" style="margin-bottom:0.15rem;">Study <em>points</em></div>
+        <div style="font-size:0.78rem;color:var(--text-muted);">Every question answered correctly earns 1 pt. Spend them on items to evolve your Pokemon or catch rare ones!</div>
       </div>
       <div style="text-align:right;flex-shrink:0;margin-left:1rem;">
         <div style="font-size:1.8rem;font-weight:600;color:var(--accent);line-height:1;" id="shop-points">0</div>
@@ -670,7 +670,7 @@ const SHOP_ITEMS = [
   {id:'fossil',      sprite:'dome-fossil.png',        icon:'🦕', name:'Mystery Fossil', cost:100, desc:'Revive a random fossil Pokémon'},
   {id:'egg',         sprite:'oval-stone.png',         icon:'🥚', name:'Mystery Egg',    cost:100, desc:'Hatch a random baby Pokémon'},
   {id:'rarehunt',    sprite:'ultra-ball.png',         icon:'🌟', name:'Rare Hunt',      cost:300, desc:'Snag a random spawnable Ultra Rare Pokémon'},
-  {id:'leghunt',     sprite:'master-ball.png',        icon:'✨', name:'Legend Hunt',    cost:600, desc:'Hunt a random Legendary Pokémon'},
+  {id:'leghunt',     sprite:'master-ball.png',        icon:'✨', name:'Legendary Hunt',    cost:600, desc:'Hunt a random Legendary Pokémon'},
 ];
 
 
@@ -886,7 +886,7 @@ function useItem(itemId) {
     const pool = [];
     for (let i = 1; i <= 251; i++) { if (POKE_WEIGHTS[i] === 1) pool.push(i); }
     const id = pool[Math.floor(Math.random() * pool.length)];
-    showConfirm(item, null, id, `Exchange for Legend Hunt?`); return;
+    showConfirm(item, null, id, `Exchange for Legendary Hunt?`); return;
   }
 
   // Evolution items — show target picker first
